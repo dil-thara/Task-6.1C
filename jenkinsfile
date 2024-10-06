@@ -1,55 +1,94 @@
 pipeline {
     agent any
     
+    environment {
+        EMAIL_RECIPIENT = 'manthilakalindu@gmail.com'
+    }
+
     stages {
         stage('Build') {
             steps {
-                echo 'Building the code using Maven.' 
+                script {
+                    echo 'Building the project using Maven...'
+                    // Example: sh 'mvn clean package'
+                }
             }
         }
+        
         stage('Unit and Integration Tests') {
             steps {
-                echo 'Running unit tests with JavaUnit...' 
-                echo 'Running integration tests with Selenium...' 
+                script {
+                    echo 'Running unit and integration tests with JUnit...'
+                    // Example: sh 'mvn test'
+                }
             }
         }
+        
         stage('Code Analysis') {
             steps {
-                echo 'Analyzing code quality with SonarQube...' 
+                script {
+                    echo 'Analyzing the code using SonarQube...'
+                    // Example: sh 'sonar-scanner'
+                }
             }
         }
+        
         stage('Security Scan') {
             steps {
-                echo 'Scanning for vulnerabilities with SAST scanner..'
+                script {
+                    echo 'Running security scan using OWASP Dependency-Check...'
+                    // Example: sh 'dependency-check.sh --project example --scan ./'
+                }
             }
         }
+        
         stage('Deploy to Staging') {
             steps {
-                echo 'Deploying application to staging server using AWS..'
+                script {
+                    echo 'Deploying to staging server...'
+                    // Example: sh 'scp target/*.war user@staging-server:/path/to/app'
+                }
             }
         }
+        
         stage('Integration Tests on Staging') {
             steps {
-                echo 'Running integration tests on staging environment...'
+                script {
+                    echo 'Running integration tests on staging server...'
+                    // Example: sh 'curl -s http://staging-server/healthcheck'
+                }
             }
         }
+        
         stage('Deploy to Production') {
             steps {
-                echo 'Deploying application to production server using AWS tools..'
+                script {
+                    echo 'Deploying to production server...'
+                    // Example: sh 'scp target/*.war user@production-server:/path/to/app'
+                }
             }
         }
     }
-  
+
     post {
         success {
-            mail to: "diltharanethmini@gmail.com",
-                 subject: "Pipeline Success - Build # ${currentBuild.number}",
-                 body: "The pipeline has successfully completed all stages. Build logs are attached."
+            echo 'Pipeline completed successfully!'
         }
+
         failure {
-            mail to: "diltharanethmini@gmail.com",
-                 subject: "Pipeline Failure - Build # ${currentBuild.number}",
-                 body: "The pipeline has failed at stage ${currentStage.name}. Build logs are attached."
+            echo 'Pipeline failed!'
+        }
+
+        always {
+            script {
+                emailext (
+                    subject: "Build ${currentBuild.fullDisplayName}: ${currentBuild.currentResult}",
+                    body: "Build ${currentBuild.fullDisplayName} finished with status ${currentBuild.currentResult}. Logs attached.",
+                    recipientProviders: [[$class: 'DevelopersRecipientProvider']],
+                    attachLogs: true,
+                    to: "${EMAIL_RECIPIENT}"
+                )
+            }
         }
     }
 }
